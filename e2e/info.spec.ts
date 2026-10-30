@@ -29,7 +29,7 @@ test("footer label opens a visible info panel: estimate, not certified, GPS limi
   const pad = await dialog.evaluate((n) => parseFloat(getComputedStyle(n).paddingLeft) + parseFloat(getComputedStyle(n).paddingRight) + 2);
   expect(Math.abs(k.width - (d.width - pad))).toBeLessThanOrEqual(1);
   expect(await key.evaluate((n) => getComputedStyle(n).textAlign)).toBe("center");
-  await expect(dialog).not.toContainText("Sürüm"); // dev build: no service worker
+  await expect(dialog).toContainText("Sürüm 1.0.0");
   await expect(page.getByRole("button", { name: "KAPAT" })).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();

@@ -47,7 +47,7 @@ self.addEventListener("message", (event) => {
       if (scoped.length === 1 && scoped[0].id === event.source?.id) return self.skipWaiting();
     }));
   }
-  else if (event.data === "version") event.ports[0]?.postMessage(VERSION); // shown in the info panel
+  else if (event.data === "version") event.ports[0]?.postMessage(VERSION); // cache build id, independent of the application release version
 });
 
 self.addEventListener("fetch", (event) => {

@@ -11,7 +11,7 @@ export interface AppOptions {
   onLangChange?: (lang: Lang) => void;
   /** Overrides for key actions (the GPS layer wraps start/resume and adds cancel/reconnect). */
   actions?: Partial<Record<ButtonVM["action"], () => void>>;
-  /** Build id of the installed offline version, shown in the info panel (production only). */
+  /** Application release version, shown in the info panel. */
   version?: () => Promise<string | null>;
 }
 

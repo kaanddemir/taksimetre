@@ -72,11 +72,12 @@ describe("Build & Deploy workflow", () => {
     for (const s of ["typecheck", "test", "e2e", "build"]) expect(pkg.scripts[s], s).toBeTruthy();
   });
 
-  it("deploys only after the checks pass, from main, and only when explicitly enabled", () => {
+  it("deploys only after the checks pass, on manual dispatch from main without a repository variable", () => {
     expect(deploy).toMatch(/needs: verify/);
-    const gate = "github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.PAGES_DEPLOY_ENABLED == 'true'";
+    const gate = "github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'";
     expect(deploy).toContain(`if: ${gate}`);
-    expect(verify).toContain(`if: ${gate}`); // no artifact is uploaded when deployment is off
+    expect(verify).toContain(`if: ${gate}`);
+    expect(yml).not.toContain("PAGES_DEPLOY_ENABLED");
     expect(deploy).toMatch(/uses: actions\/deploy-pages@[0-9a-f]{40}/);
     expect(deploy).toMatch(/name: github-pages/);
   });

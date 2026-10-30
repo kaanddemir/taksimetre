@@ -96,7 +96,7 @@ export async function startUpdates(d: UpdateDeps): Promise<SwRegistration | null
   return r;
 }
 
-/** Build id of the version serving this page (shown in the info panel), or null without a service worker. */
+/** Build id of the worker serving this page, independent of the application release version; null without a worker. */
 export function activeVersion(container: { controller: { postMessage(m: unknown, t: Transferable[]): void } | null } | undefined): Promise<string | null> {
   const c = container?.controller;
   if (!c) return Promise.resolve(null);

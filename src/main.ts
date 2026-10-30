@@ -1,9 +1,10 @@
 import "./styles.css";
+import { version as appVersion } from "../package.json";
 import { LiveJourney } from "./gps/live.ts";
 import type { GeoApi } from "./gps/tracker.ts";
 import type { WakeLockApi } from "./gps/wake-lock.ts";
 import { createSaver, restore, STORAGE_KEY, type KeyValueStore } from "./journey/persist.ts";
-import { activeVersion, startUpdates } from "./pwa/register.ts";
+import { startUpdates } from "./pwa/register.ts";
 import { ISTANBUL_TARIFFS } from "./tariff/istanbul.ts";
 import { istanbulDate } from "./tariff/select.ts";
 import { TARIFF_CATEGORIES, type TariffCategory } from "./tariff/types.ts";
@@ -71,7 +72,7 @@ mountApp(root, store, {
   liveAvailable: SIM || (live?.supported ?? false),
   lang,
   onLangChange: (l) => prefs.setItem("lang", l),
-  version: () => activeVersion(navigator.serviceWorker),
+  version: () => Promise.resolve(appVersion),
   ...(live && {
     actions: {
       start: () => live.start(),

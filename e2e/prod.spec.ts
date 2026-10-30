@@ -33,3 +33,10 @@ test("production ?diag shows aggregate stats only (no coordinates)", async ({ pa
   await expect(page.locator(".diag pre")).toContainText("accuracyMedianM");
   await expect(page.locator(".diag pre")).not.toContainText("41.03");
 });
+
+test("production About panel shows the application release version", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Taksimetre hakkında" }).click();
+  await expect(page.getByRole("dialog")).toContainText("Sürüm 1.0.0");
+  await expect(page.getByRole("dialog")).not.toContainText("0.1.0");
+});

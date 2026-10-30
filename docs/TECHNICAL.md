@@ -234,15 +234,14 @@ Both workflows are in `.github/workflows/` and run only on manual dispatch (`wor
 - **`verify` job:** `npm ci`, typecheck, unit tests, Playwright, production build, and an output check.
 - **`deploy` job:** deploys to GitHub Pages only when:
   - `verify` passed;
-  - the run is on `main` and is not a pull request;
-  - the repository variable `PAGES_DEPLOY_ENABLED` is `true`.
+  - the event is `workflow_dispatch` and the selected branch is `main`.
 
 **To enable deployment**
 
 1. Settings → Pages → Source: **GitHub Actions**.
-2. Add the repository variable `PAGES_DEPLOY_ENABLED` = `true`.
+2. Actions → **Build & Deploy (GitHub Pages)** → **Run workflow** → select `main` → **Run workflow**.
 
-Until then, nothing is published.
+No repository variable is required. Runs on other branches check the build but do not publish.
 
 **Domains.** No domain or repository name is hard-coded, and the sub-path setup is tested under `/example-repo/`. A custom domain can be set later in the Pages settings. It counts as a new origin, so installs, preferences and the offline cache start fresh there.
 
@@ -310,3 +309,7 @@ Test on iPhone Safari, the iPhone home-screen app, Android Chrome and the Androi
 - Report the median and worst-case fare error, measured before the minimum fare is applied.
 - A consistent ±1 step difference may mean one of the assumptions in §3 is wrong.
 - Engineering targets (not legal tolerances): median distance error ≤ 3 %, median fare error ≤ 5 %.
+
+### Application release version
+
+The current application version is **1.0.0** (Taksimetre 1.0). `package.json` is the source for the About panel in both development and production; the lockfile root metadata matches it. The service worker's content-derived `VERSION` identifies a cache build, not an application release. Journey schema versions, tariff identifiers and dependency/action versions are independent.

@@ -157,7 +157,7 @@ test("update waits through a journey and its fare display, then applies while id
     expect(keys[0]).toMatch(/ffff$/);
     await expect(main(page)).toHaveAttribute("data-status", "SERBEST");
     await page.getByRole("button", { name: "Taksimetre hakkında" }).click();
-    await expect(page.getByRole("dialog")).toContainText(/Sürüm [0-9a-f]{8}/);
+    await expect(page.getByRole("dialog")).toContainText("Sürüm 1.0.0");
   } finally {
     writeFileSync(SW_FILE, original);
   }

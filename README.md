@@ -76,7 +76,7 @@ npm run preview
 
 The service worker is only active in production builds. All URLs are relative, so the build works at a domain root or under a sub-path. Regenerate icons with `npm run icons`.
 
-Both GitHub Actions workflows run only when manually started with **Run workflow** in the Actions tab; pushes and pull requests do not start them. The `Build & Deploy (GitHub Pages)` workflow runs every check on each manual run. Deployment is off until Pages is set to *GitHub Actions* and the repository variable `PAGES_DEPLOY_ENABLED` is `true`.
+Both GitHub Actions workflows run only when manually started with **Run workflow** in the Actions tab; pushes and pull requests do not start them. The `Build & Deploy (GitHub Pages)` workflow runs every check on each manual run and deploys after they pass when the selected branch is `main`. Set Settings → Pages → Source to **GitHub Actions** first. No deployment variable is required.
 
 ## Tariff Verification
 
@@ -103,6 +103,10 @@ Taksimetre/
 ├── docs/TECHNICAL.md    # technical reference
 └── .github/workflows/   # CI, deployment and tariff check
 ```
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
 
 <div align="center">
   <p>Developed by <a href="https://heykaan.dev">heykaan.dev</a>.</p>
