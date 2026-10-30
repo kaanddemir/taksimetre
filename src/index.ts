@@ -1,0 +1,11 @@
+export type { Tariff, TariffCategory, TariffSource } from "./tariff/types.ts";
+export { TARIFF_CATEGORIES } from "./tariff/types.ts";
+export { ISTANBUL_TARIFFS } from "./tariff/istanbul.ts";
+export { validateTariff, assertValidTariff, validateRegistry } from "./tariff/validate.ts";
+export { selectTariff, istanbulDate } from "./tariff/select.ts";
+export { DEFAULT_POLICY, type FarePolicy } from "./engine/policy.ts";
+export type { ChargeMode, Accumulator } from "./engine/accumulator.ts";
+export { LIMITS, type Measurement, type MeasurementError } from "./engine/measurement.ts";
+export { IDLE, transition, type MeterState, type MeterCommand, type MeterResult, type MeterErrorCode, type ExtraCharge, type Journey } from "./engine/meter.ts";
+export { readMeter, payable, fareBreakdown, formatKurus, type MeterReadout, type FareBreakdown } from "./engine/fare.ts";
+export { simulateJourney, simulateSegments, segmentsToMeasurements, type Segment, type SimulationOptions } from "./engine/simulate.ts";

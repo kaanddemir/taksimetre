@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+
+# Build output (dist-pages: Playwright sub-path test build)
+dist/
+dist-pages/
+*.tsbuildinfo
+
+# Test output (Playwright results/traces/videos, review screenshots, reports, coverage)
+e2e/.results/
+e2e/.shots/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+coverage/
+
+# Tariff checker output (report and downloaded PDF; fixtures live in test/fixtures/)
+tariff-report/
+
+# Caches and temporary files
+.vite/
+.cache/
+.eslintcache
+*.tmp
+*.log
+npm-debug.log*
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# OS and editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*~

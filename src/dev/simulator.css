@@ -1,0 +1,36 @@
+.sim-toggle {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  font: 700 11px/1 var(--font-label);
+  letter-spacing: 0.08em;
+  color: #ffd166;
+  background: #1a1a1d;
+  border: 1px dashed #ffd166;
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+.sim-panel {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 40px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: grid;
+  gap: 8px;
+  width: min(260px, 90vw);
+  padding: 10px;
+  font: 12px/1.3 system-ui, sans-serif;
+  color: #eee;
+  background: #121214;
+  border: 1px dashed #ffd166;
+  border-radius: 8px;
+}
+.sim-title { margin: 0; color: #ffd166; font-weight: 600; }
+.sim-panel select { width: 100%; margin-top: 4px; }
+.sim-rates { display: flex; gap: 6px; flex-wrap: wrap; }
+.sim-rates button { padding: 4px 8px; }
+.sim-rates button[aria-pressed="true"] { outline: 2px solid #ffd166; }
+.sim-panel[hidden] { display: none; }

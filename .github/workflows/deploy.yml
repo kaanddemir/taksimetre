@@ -1,0 +1,104 @@
+# Build & Deploy: GitHub Pages
+#
+# Every push to main, pull request and manual run executes the full check suite (typecheck, unit
+# tests, Playwright incl. production, offline/update and sub-path tests, production build).
+# Deployment is a separate job that runs only if all checks passed AND it is explicitly enabled:
+#   1. Settings → Pages → Source: "GitHub Actions"
+#   2. Settings → Secrets and variables → Actions → Variables: PAGES_DEPLOY_ENABLED = true
+# Until both are done nothing is published. The build uses relative URLs (vite base "./"), so the
+# same artifact works at https://<owner>.github.io/<repo>/ and at a custom domain root; no domain or
+# repository name is configured here.
+name: Build & Deploy (GitHub Pages)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verify:
+    name: Check and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CI: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript (strict)
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Playwright (dev, production, GitHub Pages sub-path)
+        run: npm run e2e
+
+      - name: Upload Playwright results
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-results
+          path: e2e/.results
+          retention-days: 7
+
+      # Fresh build for publishing (the e2e run builds too, and its update test edits dist/sw.js temporarily).
+      - name: Production build
+        run: npm run build
+
+      - name: Check the build output
+        run: |
+          set -eu
+          for f in index.html sw.js manifest.webmanifest icons/icon-192.png icons/icon-512.png icons/maskable-512.png icons/apple-touch-icon.png; do
+            test -s "dist/$f" || { echo "::error::dist/$f missing"; exit 1; }
+          done
+          if grep -Eq '(src|href)="/' dist/index.html; then echo "::error::absolute URL in dist/index.html breaks sub-path hosting"; exit 1; fi
+          if ls dist/assets/*.map >/dev/null 2>&1; then echo "::error::source maps in dist"; exit 1; fi
+          head -n 2 dist/sw.js
+
+      - name: Upload Pages artifact
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.PAGES_DEPLOY_ENABLED == 'true'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: verify
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.PAGES_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages-deploy
+      cancel-in-progress: false
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0

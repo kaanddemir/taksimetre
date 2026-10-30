@@ -1,0 +1,427 @@
+/* ===== Design tokens (derived from the mirror-meter reference) ===== */
+:root {
+  --surface: #121114; /* uniform graphite meter face, edge to edge */
+  --bg: var(--surface);
+  --divider: rgba(255, 255, 255, 0.06);
+  --led: #ff2a1c;
+  --led-ghost: rgba(255, 42, 28, 0.075);
+  --label: #f3f1ee;
+  --label-dim: rgba(243, 241, 238, 0.17);
+  --text-soft: rgba(243, 241, 238, 0.72);
+  --text-faint: rgba(243, 241, 238, 0.5); /* 4.8:1 on --surface */
+  --key-bg: #131316;
+  --key-ring: rgba(243, 241, 238, 0.8);
+  --key-hover: #232327;
+  --key-disabled: 0.3;
+  --focus: #ffffff;
+  color-scheme: dark;
+
+  --font-label: "DIN Condensed", "Bahnschrift", "Roboto Condensed", "Avenir Next Condensed", "Arial Narrow", sans-serif;
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --key-h: 56px;
+  --key-font: clamp(15px, 4.4vmin, 19px);
+  --key-gap: var(--s3);
+  --key-tracking: 0.1em;
+  --hit: 44px;                 /* minimum invisible touch target for unboxed controls */
+  --icon-size: 1.15em;
+  /* One label scale for both orientations, driven by the shorter screen side. */
+  --label-size: clamp(12px, 3.6vmin, 20px);
+  --label-sm: calc(var(--label-size) * 0.9);
+  --dot: 0.45em;
+  /* Layout */
+  --app-max: 560px;            /* portrait content width cap (tablets) */
+  --app-max-land: 1280px;      /* landscape content width cap (desktop) */
+  --row-gap-land: clamp(var(--s2), 5vh, 56px);
+  --trip-gap: var(--s3);
+
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+
+  /* LED sizes (portrait defaults; landscape overrides below) */
+  --fare-h: clamp(46px, 18.5vw, 104px);
+  --trip-h: clamp(24px, 8.4vw, 46px);
+  --tariff-h: clamp(30px, 10vw, 54px);
+}
+
+/* Light theme: same tokens, re-valued. A matte light-grey face with deeper red LEDs, so lit digits keep
+   strong contrast and unlit segments stay visible as faint ghosts, as on a daylight-readable meter. */
+:root[data-theme="light"] {
+  --surface: #e9e7e3;
+  --divider: rgba(25, 24, 27, 0.12);
+  --led: #c8150a;
+  --led-ghost: rgba(200, 21, 10, 0.07);
+  --label: #19181b;
+  --label-dim: rgba(25, 24, 27, 0.34);
+  --text-soft: rgba(25, 24, 27, 0.74);
+  --text-faint: rgba(25, 24, 27, 0.64); /* 4.9:1 on --surface */
+  --key-bg: #f4f3f0;
+  --key-ring: rgba(25, 24, 27, 0.82);
+  --key-hover: #dddbd6;
+  --key-disabled: 0.4;
+  --focus: #000000;
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--label);
+  overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none; /* no pull-to-refresh: a stray downward swipe must not reload a running meter */
+}
+body { font: 14px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+
+/* Components set their own display; the hidden attribute must still win. */
+[hidden] { display: none !important; }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ===== App shell: portrait ===== */
+.app {
+  height: 100dvh;
+  max-width: var(--app-max);
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: calc(var(--safe-t) + var(--s4)) calc(var(--safe-r) + var(--s4)) calc(var(--safe-b) + var(--s2)) calc(var(--safe-l) + var(--s4));
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.meter {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "fare   fare"
+    "legend tariff"
+    "trip   trip";
+  column-gap: var(--s3);
+  row-gap: var(--s2);
+  padding: var(--s4) var(--s4) var(--s4) clamp(var(--s4), 5vw, var(--s5));
+}
+
+.lbl,
+.legend,
+.unit,
+.cat,
+.key {
+  font-family: var(--font-label);
+  font-weight: 700;
+  font-stretch: condensed;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* "TOPLAM ÜCRET" sits directly on top of the fare digits as one block. */
+.fare { grid-area: fare; display: flex; flex-direction: column; gap: var(--s1); min-width: 0; }
+.fare-label { font-size: var(--label-size); line-height: 1; color: var(--label); }
+
+.fare-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-width: 0;
+}
+.unit { font-size: var(--label-size); line-height: 1; color: var(--label); }
+.unit-tl { font-size: calc(var(--fare-h) * 0.3); }
+.unit-icon { display: inline-flex; width: calc(var(--label-size) * 1.35); color: var(--label); }
+.unit-icon svg { width: 100%; height: auto; }
+
+/* ===== LED ===== */
+/* Each LED is sized by its target height but shrinks proportionally when its column is narrower. */
+.led {
+  display: block;
+  flex: 0 1 auto;
+  min-width: 0;
+  width: min(100%, calc(var(--led-h) * var(--ar, 1)));
+  height: auto;
+  aspect-ratio: var(--ar, 1);
+  overflow: visible;
+}
+.led-fare { --led-h: var(--fare-h); }
+.led-trip { --led-h: var(--trip-h); }
+.led-tariff { --led-h: var(--tariff-h); width: calc(var(--led-h) * var(--ar, 1)); } /* auto-width grid cell: no % basis */
+.seg { fill: var(--led-ghost); }
+.seg.on { fill: var(--led); }
+
+/* ===== Status legends ===== */
+.legends {
+  grid-area: legend;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  gap: var(--s2) var(--s4);
+}
+@media (orientation: portrait) {
+  .legends { display: grid; grid-template-columns: repeat(2, max-content); column-gap: var(--s5); }
+}
+.legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  font-size: var(--label-size);
+  line-height: 1;
+  color: var(--label-dim);
+}
+/* Dot is a flex item, so it is centred on the label box rather than positioned by hand. */
+.legend::before {
+  content: "";
+  flex: none;
+  width: var(--dot);
+  height: var(--dot);
+  margin-top: -0.12em; /* condensed caps sit high in their line box */
+  border-radius: 50%;
+  background: var(--led-ghost);
+}
+.legend.on { color: var(--label); }
+.legend.on::before { background: var(--led); }
+
+/* ===== Tariff ===== */
+.tariff {
+  grid-area: tariff;
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-areas: "lbl led" "cat cat";
+  align-items: center;
+  justify-items: end;
+  column-gap: var(--s2);
+  row-gap: var(--s1);
+}
+.tariff .lbl { grid-area: lbl; font-size: var(--label-size); color: var(--label); }
+.tariff .led { grid-area: led; }
+.cat {
+  grid-area: cat;
+  font-size: var(--label-sm);
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+
+/* ===== Trip (distance + elapsed time) ===== */
+.trip {
+  grid-area: trip;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--trip-gap);
+  padding-top: calc(var(--s2) + 1px); /* Preserve the removed divider's occupied space. */
+}
+.trip-row { display: flex; align-items: flex-end; gap: var(--s2); min-width: 0; }
+.trip-row .unit { padding-bottom: 2px; }
+
+/* ===== Notice (info line or warning), controls, footer ===== */
+.notice {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: var(--hit); /* reserved so the layout does not jump when a notice appears */
+  font-size: var(--label-size);
+  color: var(--text-soft);
+}
+.notice-info { padding: 0 var(--s2); }
+.warn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: 0 var(--s2);
+  color: var(--label);
+}
+.warn-icon { display: inline-flex; width: var(--icon-size); height: var(--icon-size); color: var(--led); }
+.warn-icon svg { width: 100%; height: 100%; }
+
+.controls {
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--key-gap);
+}
+.key {
+  /* Labels are all caps: centre the capital letters, not the font's line box. DIN Condensed
+     reserves extra descender space, which otherwise sits the caps ~3 px high. */
+  /* Buttons centre their content natively; text-box needs a block container, so no flex here. */
+  line-height: 1;
+  text-box: trim-both cap alphabetic;
+  min-height: var(--key-h);
+  /* letter-spacing also trails the last letter; matching start padding keeps the word centred. */
+  padding: 0 var(--s4) 0 calc(var(--s4) + var(--key-tracking));
+  font-size: var(--key-font);
+  letter-spacing: var(--key-tracking);
+  color: var(--label);
+  background: var(--key-bg);
+  border: 2px solid var(--key-ring);
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.key:disabled { opacity: var(--key-disabled); cursor: default; }
+.key.armed { color: var(--led); border-color: var(--led); }
+.key:focus-visible,
+.lang:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+@media (hover: hover) {
+  .key:not(:disabled):hover { background: var(--key-hover); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .key { transition: background 120ms, color 120ms, border-color 120ms; }
+  .key:not(:disabled):active { transform: scale(0.98); }
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+/* Unboxed "TR" / "EN" text toggle and sun/moon theme toggle; the 44 px hit areas are invisible and
+   touch each other, so the two glyphs sit evenly spaced at the edge. */
+.lang {
+  /* Block-level button content so text-box can centre the caps (as on .key); buttons centre it natively. */
+  display: inline-block;
+  min-width: var(--hit);
+  min-height: var(--hit);
+  padding: 0 var(--s1);
+  font: 700 var(--label-sm)/1 var(--font-label);
+  text-box: trim-both cap alphabetic;
+  letter-spacing: 0.08em;
+  color: var(--text-soft);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+/* Same type as the TR/EN toggle, one step quieter; margin-right pushes the controls to the far right.
+   An unboxed button with a 44 px invisible target: a tap opens the info panel. */
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s1);
+  margin-right: auto;
+  min-height: var(--hit);
+  padding: 0 var(--s1);
+  font: 700 var(--label-sm)/1 var(--font-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.brand-name { text-box: trim-both cap alphabetic; }
+.brand-icon { display: block; width: calc(var(--label-sm) * 0.95); height: calc(var(--label-sm) * 0.95); }
+.brand-icon svg { display: block; width: 100%; height: 100%; }
+.brand:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+
+/* Info panel: opened on request only. Same surface, type and keys as the meter; scrolls on short screens. */
+.info {
+  /* Wide panel with small, even margins; capped so lines stay readable on desktop. */
+  width: min(100% - 2 * var(--s4), 760px);
+  max-width: none;
+  max-height: calc(100dvh - 2 * var(--s4));
+  overflow: auto;
+  padding: var(--s5) var(--s5) var(--s4);
+  color: var(--text-soft);
+  background: var(--surface);
+  border: 1px solid var(--divider);
+  border-radius: var(--s3);
+  font-size: 15px;
+  line-height: 1.55;
+}
+.info::backdrop { background: rgba(0, 0, 0, 0.6); }
+.info-title {
+  margin: 0 0 var(--s4);
+  font: 700 var(--label-size)/1 var(--font-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--label);
+}
+.info-body p { margin: 0 0 var(--s3); }
+.info-meta { margin: var(--s4) 0; font-size: 13px; color: var(--text-faint); }
+.info-meta:empty { display: none; }
+.info-actions { margin-top: var(--s4); }
+.info-actions .key { display: block; width: 100%; }
+.theme svg { display: block; margin: auto; width: calc(var(--label-sm) * 1.25); height: calc(var(--label-sm) * 1.25); }
+
+/* ===== Landscape: two-column meter face ===== */
+@media (orientation: landscape) {
+  :root {
+    --fare-h: clamp(52px, 30vh, 210px);
+    --trip-h: clamp(24px, 13vh, 84px);
+    --tariff-h: clamp(30px, 15vh, 96px);
+    --key-h: clamp(48px, 14vh, 64px);
+    --key-gap: var(--s4);
+    --trip-gap: clamp(var(--s4), 3vw, 40px);
+  }
+  .app {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    grid-template-areas:
+      "fare    tariff"
+      "legend  note"
+      "trip    controls"
+      "foot    foot";
+    /* Rows keep their natural height and are centred as one group; no stretched empty row. */
+    align-content: center;
+    max-width: var(--app-max-land);
+    column-gap: clamp(var(--s4), 4vw, 48px);
+    row-gap: var(--row-gap-land);
+    height: 100dvh;
+    padding:
+      calc(var(--safe-t) + clamp(10px, 4vh, var(--s5)))
+      calc(var(--safe-r) + clamp(var(--s4), 4vw, 40px))
+      calc(var(--safe-b) + clamp(6px, 2vh, var(--s3)))
+      calc(var(--safe-l) + clamp(var(--s4), 4vw, 40px));
+  }
+  .meter { display: contents; }
+  .tariff {
+    align-self: start;
+    justify-self: end;
+    justify-items: end;
+  }
+  .trip { align-self: end; padding-top: 0; }
+  .legends { gap: var(--s2) var(--s5); align-self: center; }
+  .notice { grid-area: note; align-self: center; justify-content: flex-end; }
+  .controls { grid-area: controls; align-self: end; margin-top: 0; }
+  .foot { grid-area: foot; }
+}
+
+/* Portrait phones (all but the very shortest): stack distance and time so they use the full width,
+   and centre the meter in the space above the controls. */
+@media (orientation: portrait) and (min-height: 540px) {
+  :root {
+    --fare-h: clamp(46px, 21vw, 120px);
+    --trip-h: clamp(30px, 17vw, 96px);
+    --tariff-h: clamp(34px, 13vw, 72px);
+  }
+  .controls { margin-top: 0; }
+  .trip { grid-template-columns: minmax(0, 1fr); row-gap: var(--s3); }
+  /* Centre the meter in the space above the controls instead of leaving one large empty band. */
+  .meter { row-gap: var(--s4); padding-block: var(--s5); margin-block: auto; }
+}
+
+
+/* ?diag field-validation readout (opt-in, not part of the normal UI) */
+.diag { position: fixed; left: 4px; bottom: 4px; z-index: 5; max-width: 90vw; font: 11px/1.3 ui-monospace, monospace; color: #9f9; background: rgba(0, 0, 0, 0.85); border: 1px solid #363; border-radius: 6px; padding: 4px 6px; }
+.diag pre { margin: 4px 0 0; white-space: pre-wrap; user-select: text; -webkit-user-select: text; }

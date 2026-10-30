@@ -1,0 +1,59 @@
+# Check Taxi Tariffs (manual only)
+#
+# Finds the current taxi tariff PDF on İBB TUHİM ("Ücret Tarifeleri"), reads it, and compares every
+# category with src/tariff/istanbul.ts. Result: UP TO DATE (job passes), CHANGES FOUND or
+# UNABLE TO VERIFY (job fails, so it is noticed). The summary is shown on the run page; the detailed
+# report, extracted text and the downloaded PDF are attached as the "tariff-report" artifact.
+# Read-only: it never edits files, commits, opens pull requests or deploys. Independent of deploy.yml.
+name: Check Taxi Tariffs
+
+on:
+  workflow_dispatch:
+    inputs:
+      pdf_url:
+        description: "Optional: check this official PDF (https://*.ibb.gov.tr/…) instead of discovering it"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-tariffs
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Compare official tariff with the app
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      # No npm install: the checker uses only Node built-ins and the app's tariff modules.
+      - name: Check official tariff
+        id: check
+        env:
+          PDF_URL: ${{ inputs.pdf_url }}
+        run: |
+          set -u
+          args=(--out tariff-report)
+          if [ -n "$PDF_URL" ]; then args+=(--pdf "$PDF_URL"); fi
+          node --experimental-strip-types --no-warnings scripts/tariff-check/main.ts "${args[@]}"
+
+      - name: Upload detailed report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: tariff-report
+          path: tariff-report
+          if-no-files-found: warn
+          retention-days: 30

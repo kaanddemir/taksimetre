@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Meta CSP works on static hosts; ancestor/permission policies require response headers. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-fBHv7ZiIeYpeAdKfEt9B1tTYvbGNDllMC4U1ClikfZU='; style-src 'self'; img-src 'self'; font-src 'none'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#121114" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="description" content="İstanbul taksi tarifelerine göre GPS ile tahmini yolculuk ücretini hesaplayın." />
+    <!-- PWA. Paths are relative (vite base "./"), so the app works under any host or sub-path. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/icons/icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Taksimetre" />
+    <!-- "default", not "black-translucent": white status-bar text would vanish on the light theme. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <!-- Sets the theme before first paint (same rule as src/ui/theme.ts) so a light choice never flashes dark. -->
+    <script>
+      try {
+        var t = localStorage.getItem("theme");
+        if (t !== "light" && t !== "dark") t = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+        document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
+    <title>Taksimetre · İstanbul</title>
+  </head>
+  <body>
+    <main id="app" class="app"></main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
