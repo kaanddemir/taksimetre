@@ -53,6 +53,11 @@ describe("Build & Deploy workflow", () => {
   const verify = job(yml, "verify");
   const deploy = job(yml, "deploy");
 
+  it("runs only on manual dispatch", () => {
+    const on = /\non:\n([\s\S]*?)\n\S/.exec(yml)![1]!;
+    expect(on.match(/^ {2}[a-z_]+:/gm)).toEqual(["  workflow_dispatch:"]);
+  });
+
   it("defaults to read-only; only the deploy job may write to Pages", () => {
     expect(yml).toMatch(/\npermissions:\n {2}contents: read\n/);
     expect(verify).not.toMatch(/permissions:/);

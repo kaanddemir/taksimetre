@@ -226,11 +226,11 @@ Sources:
 
 ## 7. GitHub Actions
 
-Both workflows are in `.github/workflows/`. Their structure is tested by `test/workflows.test.ts`.
+Both workflows are in `.github/workflows/` and run only on manual dispatch (`workflow_dispatch`). Start them with **Run workflow** in the Actions tab; pushes and pull requests do not start them. Their structure is tested by `test/workflows.test.ts`.
 
 ### Build & Deploy (GitHub Pages) — `deploy.yml`
 
-- **Triggers:** push to `main`, pull requests and manual runs.
+- **Trigger:** manual runs only (`workflow_dispatch`).
 - **`verify` job:** `npm ci`, typecheck, unit tests, Playwright, production build, and an output check.
 - **`deploy` job:** deploys to GitHub Pages only when:
   - `verify` passed;

@@ -1,6 +1,6 @@
 # Build & Deploy: GitHub Pages
 #
-# Every push to main, pull request and manual run executes the full check suite (typecheck, unit
+# Each manual run executes the full check suite (typecheck, unit
 # tests, Playwright incl. production, offline/update and sub-path tests, production build).
 # Deployment is a separate job that runs only if all checks passed AND it is explicitly enabled:
 #   1. Settings → Pages → Source: "GitHub Actions"
@@ -11,9 +11,6 @@
 name: Build & Deploy (GitHub Pages)
 
 on:
-  push:
-    branches: [main]
-  pull_request:
   workflow_dispatch:
 
 permissions:
